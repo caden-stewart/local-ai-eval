@@ -51,7 +51,9 @@ def chat(
     tools: Optional[list[dict[str, Any]]] = None,
     max_tokens: int = 8000,
     provider: Optional[dict[str, Any]] = None,
-    timeout: int = 300,
+    # Slow thinking models have produced ~55 tokens/second; a full 20000-token
+    # reply at that pace takes about 6 minutes, so 5 minutes cut replies off.
+    timeout: int = 900,
     retries: int = 4,
 ) -> dict[str, Any]:
     """Return {"message", "finish_reason", "usage", "cost", "provider"}."""
