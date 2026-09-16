@@ -38,11 +38,13 @@ def run_agent(
         messages.append(assistant)
 
         if not tool_calls:
+            # finish_reason "length" with no tool calls means the model ran out of
+            # tokens mid-thought, not that it decided it was done.
             return {
                 "final_text": message.get("content") or "",
                 "calls": calls,
                 "steps": step,
-                "stopped": "finished",
+                "stopped": "token_limit" if reply.get("finish_reason") == "length" else "finished",
             }
 
         for tool_call in tool_calls:

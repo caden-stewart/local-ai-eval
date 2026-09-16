@@ -62,8 +62,14 @@ RUNS_PER_CASE = {"digest": 1, "wedding": 10, "newsletter": 1, "smallbiz": 1}
 # the prepaid credit on the OpenRouter account; this just stops short of it.
 BUDGET_USD = 18.00
 
-WORKERS = 4          # requests in flight at once
-MAX_TOKENS = 8000    # per request; reasoning models spend some of this thinking
+WORKERS = 8          # requests in flight at once; slow thinking models otherwise stretch a run to hours
+
+# Per request, and it covers hidden thinking plus the visible answer. At 8000,
+# qwen3.8-27b spent everything thinking and returned empty newsletter drafts.
+# A request that still hits this limit is recorded with finish_reason "length"
+# and counts against the model, since a model that needs more than this would
+# be unusably slow on local hardware anyway.
+MAX_TOKENS = 20000
 
 # require_parameters: only route to providers that support tool calling when a
 # request uses tools. data_collection deny: skip providers that keep or train
@@ -195,7 +201,10 @@ def execute(job: dict, run_dir: Path, state: RunState) -> None:
         if "error" in record:
             state.errors += 1
             if "HTTP 402" in record["error"]:
-                state.stop_reason = "OpenRouter credit is used up (HTTP 402)"
+                # 402 means the balance can't cover this request's max_tokens, which
+                # usually means the balance is nearly empty, not necessarily zero.
+                state.stop_reason = ("OpenRouter balance is too low for the next request (HTTP 402). "
+                                     "Check openrouter.ai/settings/credits")
         if state.spent >= BUDGET_USD and not state.stop_reason:
             state.stop_reason = f"spend reached the ${BUDGET_USD:.2f} budget"
         print(f"[{state.finished}/{state.total}] {job['test']} {job['case']['id']} "

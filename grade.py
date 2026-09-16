@@ -50,10 +50,14 @@ def latest_run() -> Path:
 
 
 def load_records(run_dir: Path, test: str) -> list[dict]:
+    """Every record for a test, minus errors that a later --resume retried successfully."""
     path = run_dir / f"{test}.jsonl"
     if not path.exists():
         return []
-    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    records = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    key = lambda r: (r["case_id"], r["run_index"], r["model"])  # noqa: E731
+    succeeded = {key(r) for r in records if "error" not in r}
+    return [r for r in records if "error" not in r or key(r) not in succeeded]
 
 
 # --- blind sheet -----------------------------------------------------------
@@ -85,8 +89,12 @@ def make_sheet(run_dir: Path, force: bool) -> int:
         key[blind_id] = {"model": record["model"], "tier": record["tier"], "case_id": record["case_id"]}
         graded = module.grade(cases[record["case_id"]], record["output"])
         hint = ", ".join(graded["unsupported_numbers"]) or "none"
-        lines += [f"---", "", f"## {blind_id} - topic: {record['case_id']}", "",
-                  f"_Numbers not found in the sources: {hint}_", "", record["output"]["final"], ""]
+        notes = [f"_Numbers not found in the sources: {hint}_"]
+        if graded["hit_token_limit"]:
+            notes.append("_One of the three agents ran out of tokens, so this draft may be cut off or empty. "
+                         "Grade what's here._")
+        final = record["output"]["final"].strip() or "_(empty: no draft was produced)_"
+        lines += ["---", "", f"## {blind_id} - topic: {record['case_id']}", "", *notes, "", final, ""]
 
     (run_dir / "grading_sheet.md").write_text("\n".join(lines), encoding="utf-8")
     (run_dir / "blind_key.json").write_text(json.dumps(key, indent=2), encoding="utf-8")
