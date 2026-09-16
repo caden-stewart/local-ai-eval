@@ -54,22 +54,19 @@ def run(case: dict, chat) -> dict:
     pack = sources(case)
     voice = _voice()
 
-    notes = chat([
-        {"role": "system", "content": RESEARCHER},
-        {"role": "user", "content": pack},
-    ])["message"].get("content") or ""
+    finish_reasons = []
 
-    draft = chat([
-        {"role": "system", "content": WRITER.format(voice=voice)},
-        {"role": "user", "content": f"Topic and researcher's notes:\n\n{pack.splitlines()[1]}\n\n{notes}"},
-    ])["message"].get("content") or ""
+    def step(system: str, user: str) -> str:
+        reply = chat([{"role": "system", "content": system}, {"role": "user", "content": user}])
+        finish_reasons.append(reply["finish_reason"])
+        return reply["message"].get("content") or ""
 
-    final = chat([
-        {"role": "system", "content": EDITOR.format(voice=voice)},
-        {"role": "user", "content": f"SOURCE DOCUMENTS:\n\n{pack}\n\nDRAFT:\n\n{draft}"},
-    ])["message"].get("content") or ""
+    notes = step(RESEARCHER, pack)
+    draft = step(WRITER.format(voice=voice), f"Topic and researcher's notes:\n\n{pack.splitlines()[1]}\n\n{notes}")
+    final = step(EDITOR.format(voice=voice), f"SOURCE DOCUMENTS:\n\n{pack}\n\nDRAFT:\n\n{draft}")
 
-    return {"notes": notes, "draft": draft, "final": final}
+    # "length" at any stage means that agent ran out of tokens; it shows on the grading sheet.
+    return {"notes": notes, "draft": draft, "final": final, "finish_reasons": finish_reasons}
 
 
 def estimate(case: dict) -> list[tuple[int, int]]:
@@ -82,4 +79,5 @@ def grade(case: dict, output: dict) -> dict:
     return {
         "passed": None,  # graded by Caden via grade.py sheet
         "unsupported_numbers": common.unsupported_numbers(output["final"], sources(case)),
+        "hit_token_limit": "length" in output.get("finish_reasons", []),
     }
