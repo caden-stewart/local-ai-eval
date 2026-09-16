@@ -1,0 +1,72 @@
+{
+  "01-miners-after-halving": [
+    {"point": "Ridgeline surveyed 47 mining firms", "any_of": ["47"]},
+    {"point": "Hashprice fell to $38 per petahash per day", "any_of": ["38"]},
+    {"point": "Median all-in cost to mine one bitcoin is $71,400", "any_of": ["71400"]},
+    {"point": "Only firms with power under 4.5 cents/kWh were clearly profitable", "any_of": ["4.5"]},
+    {"point": "About 12% of hashrate expected to go offline or relocate within 18 months", "any_of": ["12"]}
+  ],
+  "02-cantillon-housing": [
+    {"point": "Regional banks expanded lending by $2.3 billion", "any_of": ["2.3"]},
+    {"point": "Prices near busy lending branches rose 18% vs 7% in outer towns", "any_of": ["18"]},
+    {"point": "Wages grew only 3.1%", "any_of": ["3.1"]},
+    {"point": "First-time buyer share fell from 34% to 22%", "any_of": ["22"]},
+    {"point": "Recommendation: banks publish lending by zip code quarterly", "any_of": ["zip code", "zip-code"]}
+  ],
+  "03-quote-followup-agent": [
+    {"point": "Time to first follow-up fell from 26 hours to 3 hours", "any_of": ["26"]},
+    {"point": "Quote win rate rose from 31% to 37%", "any_of": ["37"]},
+    {"point": "Costs about $1,150 a month", "any_of": ["1150"]},
+    {"point": "Wrong pricing went out on 14 quotes in the first month", "any_of": ["14"]},
+    {"point": "Fix: human approval required for any follow-up mentioning price", "any_of": ["approv"]}
+  ],
+  "04-lightning-coffee": [
+    {"point": "Northfork has 23 locations", "any_of": ["23"]},
+    {"point": "Lightning costs about 0.4% vs about 2.9% for cards", "any_of": ["0.4"]},
+    {"point": "Lightning is 2.8% of transactions", "any_of": ["2.8"]},
+    {"point": "Refunds are the biggest pain point", "any_of": ["refund"]},
+    {"point": "Expanding Lightning to 11 more new stores", "any_of": ["11"]}
+  ],
+  "05-law-firm-local-models": [
+    {"point": "Models run locally on two Mac Studios; no client data goes to cloud AI", "any_of": ["mac studio", "client data", "confidential"]},
+    {"point": "Setup cost $14,800", "any_of": ["14800"]},
+    {"point": "Document review time down 35%", "any_of": ["35"]},
+    {"point": "17 fabricated citations caught in the first 90 days", "any_of": ["17"]},
+    {"point": "Every brief now requires citation verification", "any_of": ["verif"]}
+  ],
+  "06-savings-time-preference": [
+    {"point": "Member savings rate fell from 11.2% to 6.4%", "any_of": ["6.4"]},
+    {"point": "Framed as time preference: near-zero rates removed the reward for waiting", "any_of": ["time preference", "price of waiting", "reward for waiting"]},
+    {"point": "Members under 30 hold median savings of $1,900", "any_of": ["1900"]},
+    {"point": "Round-up program raised savings 14%", "any_of": ["14"]},
+    {"point": "Advice: automatic transfer to savings on payday", "any_of": ["payday"]}
+  ],
+  "07-ai-sdr-research": [
+    {"point": "Research agent ran across 600 target accounts", "any_of": ["600"]},
+    {"point": "Meetings booked up 28%", "any_of": ["28"]},
+    {"point": "Reply rate rose from 2.6% to 4.1%", "any_of": ["4.1"]},
+    {"point": "13% of suggested first lines referenced the wrong news at first", "any_of": ["13"]},
+    {"point": "Fix: cite sources and have reps review first lines before sending", "any_of": ["review"]}
+  ],
+  "08-self-custody-survey": [
+    {"point": "Survey of 2,400 US bitcoin holders", "any_of": ["2400"]},
+    {"point": "41% keep all their bitcoin on an exchange", "any_of": ["41"]},
+    {"point": "16% of self-custody users have lost access to a wallet", "any_of": ["16"]},
+    {"point": "Most common failure: storing the seed phrase digitally", "any_of": ["seed"]},
+    {"point": "Recommendation: 2-of-3 multisig", "any_of": ["multisig", "multi-sig"]}
+  ],
+  "09-data-centers-grid": [
+    {"point": "Data centers requested 3.2 GW of connections", "any_of": ["3.2"]},
+    {"point": "First large data center connection scheduled for 2029", "any_of": ["2029"]},
+    {"point": "Large-load tariff requires 15-year contracts", "any_of": ["15"]},
+    {"point": "Utility requested a 4.7% rate increase", "any_of": ["4.7"]},
+    {"point": "Bitcoin miners curtailed for 212 hours last summer", "any_of": ["212"]}
+  ],
+  "10-grocery-inflation-index": [
+    {"point": "Index tracks 140 grocery items", "any_of": ["140"]},
+    {"point": "Basket price rose 23% over three years", "any_of": ["23"]},
+    {"point": "31 items shrank without getting cheaper (shrinkflation)", "any_of": ["31"]},
+    {"point": "Olive oil rose 61%", "any_of": ["61"]},
+    {"point": "Advice: compare unit prices, not sticker prices", "any_of": ["unit price", "per ounce", "price per"]}
+  ]
+}

@@ -1,0 +1,11 @@
+# Secrets, never committed
+.env
+.env.*
+!.env.example
+
+# Run outputs: large, and grading.csv holds personal scores
+results/
+
+__pycache__/
+*.pyc
+.DS_Store
