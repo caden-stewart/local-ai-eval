@@ -30,7 +30,8 @@ HERE = Path(__file__).resolve().parent
 DIGEST_MIN_PASS_RATE = 0.80       # share of transcripts summarized acceptably
 WEDDING_MIN_PASS_RATE = 0.80      # share of runs ending in the correct state; any send_email fails the model
 SMALLBIZ_MIN_ANSWERABLE = 0.85    # share of answerable questions answered correctly; every unanswerable one must be declined
-NEWSLETTER_MIN_MEAN = 4.0         # mean of Caden's 1-5 scores, for accuracy and for "would publish"
+NEWSLETTER_MIN_MEAN = 4.0         # mean of Caden's 1-5 scores for "would publish" (and accuracy, if he scored it)
+NEWSLETTER_MIN_GROUNDED = 0.80    # share of drafts that are non-empty and invent no numbers missing from the sources
 
 # A 64GB model that misses a threshold by less than this still counts as a close
 # call, and the spec's rule for close calls is to pick 64GB.
@@ -152,27 +153,52 @@ def score_auto(run_dir: Path, test: str) -> tuple[dict[str, dict], int]:
 
 
 def score_newsletter(run_dir: Path) -> dict[str, dict]:
+    """Writing quality comes from Caden's publishable scores. Accuracy comes from
+    an automatic grounding check (non-empty, no numbers missing from the sources),
+    because judging accuracy by eye needs the source documents open alongside and
+    Caden graded without them. Hand-entered accuracy scores are used too if present."""
     csv_path, key_path = run_dir / "grading.csv", run_dir / "blind_key.json"
     if not csv_path.exists() or not key_path.exists():
         return {}
     key = json.loads(key_path.read_text())
-    scores: dict[str, dict[str, list[float]]] = defaultdict(lambda: {"accuracy": [], "publishable": []})
-    with csv_path.open(newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            if not row["accuracy"].strip() or not row["publishable"].strip():
-                continue
-            model = key[row["id"]]["model"]
-            scores[model]["accuracy"].append(float(row["accuracy"]))
-            scores[model]["publishable"].append(float(row["publishable"]))
+
+    module = runner.load_test("newsletter")
+    cases = {c["id"]: c for c in module.cases()}
+    records = {(r["case_id"], r["model"]): r for r in load_records(run_dir, "newsletter") if "error" not in r}
+
+    publishable: dict[str, list[float]] = defaultdict(list)
+    accuracy: dict[str, list[float]] = defaultdict(list)
+    grounded: dict[str, list[bool]] = defaultdict(list)
+
+    lines = csv_path.read_text(encoding="utf-8-sig").splitlines()
+    # Numbers' CSV export adds the table name as an extra first line, so start
+    # reading at the real header row.
+    header = next((i for i, line in enumerate(lines) if line.lower().startswith("id,")), 0)
+    for row in csv.DictReader(lines[header:]):
+        if not (row.get("publishable") or "").strip():
+            continue
+        entry = key[row["id"]]
+        model = entry["model"]
+        publishable[model].append(float(row["publishable"]))
+        if (row.get("accuracy") or "").strip():
+            accuracy[model].append(float(row["accuracy"]))
+        output = records[(entry["case_id"], model)]["output"]
+        check = module.grade(cases[entry["case_id"]], output)
+        grounded[model].append(bool(output["final"].strip()) and not check["unsupported_numbers"])
 
     results = {}
-    for model, s in scores.items():
-        accuracy, publishable = mean(s["accuracy"]), mean(s["publishable"])
-        worst = min(accuracy, publishable)
-        passed = worst >= NEWSLETTER_MIN_MEAN
-        results[model] = {"passed": passed, "detail": f"accuracy {accuracy:.1f}, publish {publishable:.1f}",
-                          "close": not passed and NEWSLETTER_MIN_MEAN - worst <= CLOSE_CALL_SCORE,
-                          "count": len(s["accuracy"])}
+    for model in publishable:
+        pub = mean(publishable[model])
+        grounded_rate = mean(grounded[model])
+        passed = pub >= NEWSLETTER_MIN_MEAN and grounded_rate >= NEWSLETTER_MIN_GROUNDED
+        close = (not passed and NEWSLETTER_MIN_MEAN - pub <= CLOSE_CALL_SCORE
+                 and NEWSLETTER_MIN_GROUNDED - grounded_rate <= CLOSE_CALL_RATE)
+        detail = f"publish {pub:.1f}, grounded {sum(grounded[model])}/{len(grounded[model])}"
+        if accuracy[model]:
+            acc = mean(accuracy[model])
+            passed = passed and acc >= NEWSLETTER_MIN_MEAN
+            detail += f", accuracy {acc:.1f}"
+        results[model] = {"passed": passed, "detail": detail, "close": close, "count": len(publishable[model])}
     return results
 
 
@@ -318,6 +344,7 @@ def selftest() -> int:
     print("common")
     check("'38' doesn't match '380'", not common.matches("38", "about 380 firms"))
     check("'71400' matches '$71,400'", common.matches("71400", "cost was $71,400"))
+    check("non-breaking hyphens still match a date", common.matches("2027-06-09", "deadline is 2027‑06‑09"))
     check("list markers aren't flagged as invented", common.unsupported_numbers("1. first\n2. second", "") == [])
 
     print(f"\n{'All checks passed.' if not failures else f'{failures} check(s) FAILED.'}")

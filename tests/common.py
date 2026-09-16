@@ -17,10 +17,18 @@ def estimate_tokens(text: str) -> int:
     return max(1, len(text) // 4)
 
 
+# Some models write typographic look-alikes: nemotron wrote a correct deadline as
+# 2027‑06‑09 with non-breaking hyphens, which failed a plain "2027-06-09" match.
+LOOKALIKES = str.maketrans({
+    "‐": "-", "‑": "-", "‒": "-", "–": "-", "—": "-", "−": "-",
+    " ": " ", " ": " ", " ": " ",
+    "’": "'",
+})
+
+
 def normalize(text: str) -> str:
-    text = text.lower()
+    text = text.lower().translate(LOOKALIKES)
     text = re.sub(r"(?<=\d),(?=\d)", "", text)  # 71,400 -> 71400
-    text = text.replace("–", "-").replace("—", "-").replace("’", "'")
     return re.sub(r"\s+", " ", text)
 
 

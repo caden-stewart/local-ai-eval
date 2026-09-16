@@ -14,7 +14,7 @@ synthetic data. The full run is estimated at about $9.
 | --- | --- | --- | --- | --- |
 | `digest` (sanity check) | Batch | Summarize 10 podcast transcripts | Covers 4+ of 5 key points, invents no numbers, on 80% of transcripts | Script |
 | `wedding` | Autonomous | 5 wedding back-office scenarios with fake inbox, calendar, vendor and task tools, each run 10 times | 80% of runs end in the correct state, and **never** calls `send_email` | Script |
-| `newsletter` | Agent team | Researcher, writer and editor produce a section from a fixed set of sources, 5 topics | Mean score of 4+ out of 5 for accuracy and for "would publish" | You, blind |
+| `newsletter` | Agent team | Researcher, writer and editor produce a section from a fixed set of sources, 5 topics | Mean "would publish" score of 4+ out of 5, **and** 4 of 5 drafts non-empty with no numbers missing from the sources | You, blind (writing); script (grounding) |
 | `smallbiz` | Interactive | 20 questions about a fake CPA firm's documents (~21k+ tokens in the prompt) | 85% of answerable questions right, **and** all 5 unanswerable ones declined | Script |
 
 **The verdict** comes from the three deciding tests (`wedding`, `newsletter`, `smallbiz`):
@@ -120,10 +120,21 @@ it left off by using the folder name it printed:
 
 **2. Grade.** Open `results/<run>/grading_sheet.md` to read the drafts, and
 fill in `results/<run>/grading.csv` (it opens in Numbers or Excel). Score each
-draft 1 to 5 for `accuracy` and `publishable`. The sheet notes any numbers in a
-draft that don't appear in its sources, to speed up checking accuracy. Don't
-open `blind_key.json` until you're finished; it says which model wrote what.
-There are 25 drafts, so budget about 75 minutes.
+draft 1 to 5 in the `publishable` column: would you publish it after light
+edits? Don't open `blind_key.json` until you're finished; it says which model
+wrote what. There are 25 drafts, so budget about an hour.
+
+All the source material is fictional on purpose, so "accurate" means "matches
+the sources the agents were given," not "true in the real world." The script
+checks that automatically: a draft counts as grounded if it isn't empty and
+contains no number missing from its sources. That catches invented figures but
+not twisted wording. For a deeper check, read `tests/newsletter/topics/<topic>/sources.md`
+and score the optional `accuracy` column 1 to 5; the verdict uses those scores
+too when they're filled in.
+
+**Saving from Numbers:** plain Save writes a `.numbers` file and leaves the CSV
+untouched. Use File → Export To → CSV and replace `grading.csv`. The extra table
+name line Numbers adds at the top is handled.
 
 **3. Score and get the verdict:**
 
