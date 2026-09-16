@@ -7,6 +7,7 @@ the ones that aren't (a bad request, or running out of credit).
 """
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import time
@@ -87,8 +88,10 @@ def chat(
             if e.code != 429 and e.code < 500:
                 raise LLMError(f"HTTP {e.code}: {detail}") from None
             last = f"HTTP {e.code}: {detail}"
-        except OSError as e:  # URLError, timeouts, dropped connections
-            last = f"network: {e}"
+        except (OSError, http.client.HTTPException) as e:
+            # URLError, timeouts, dropped connections, and IncompleteRead when a
+            # connection closes partway through the reply (seen in the full run).
+            last = f"network: {type(e).__name__}: {e}"
         except ValueError as e:
             last = f"response was not JSON: {e}"
         else:
